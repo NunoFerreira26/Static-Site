@@ -90,15 +90,14 @@ def generate_pages_recursively(source_directory:str,template:str,destination_dir
             generate_pages_recursively(source_path,template,sub_destination_directory)
 
 def main():
-     #If an argument is not given, default to / 
+     #If an argument is not given, default to / - For local testing
     basepath = "/"
-    #Grab the first CLI argument to the program
+    #Grab the first CLI argument to the program - For production via build.sh
     if len(sys.argv) > 1:
         basepath = sys.argv[1]
    
-
     souce = STATIC_DIR
-    destination = PUBLIC_DIR
+    destination = DOCS_DIR
 
     #Clear the destination directory first
     if os.path.exists(destination):
@@ -110,13 +109,13 @@ def main():
     #Run recursive copy
     copy_files(souce,destination)
 
-    generate_pages_recursively(CONTENT_DIR,TEMPLATE_PATH,PUBLIC_DIR,basepath)
+    generate_pages_recursively(CONTENT_DIR,TEMPLATE_PATH,DOCS_DIR,basepath)
 
 SRC_DIR = os.path.dirname(os.path.abspath(__file__)) #Path to src
 PROJECT_ROOT = os.path.dirname(SRC_DIR) #Path to the root
 #Dynamic absolute paths
 STATIC_DIR = os.path.join(PROJECT_ROOT,"static")
-PUBLIC_DIR = os.path.join(PROJECT_ROOT,"public")
+DOCS_DIR = os.path.join(PROJECT_ROOT,"docs")
 CONTENT_DIR = os.path.join(PROJECT_ROOT,"content")
 TEMPLATE_PATH = os.path.join(PROJECT_ROOT, "template.html")
 
