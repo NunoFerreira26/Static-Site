@@ -87,7 +87,7 @@ def generate_pages_recursively(source_directory:str,template:str,destination_dir
                     f.write(full_template)
         else:
             sub_destination_directory = os.path.join(destination_directory,item)
-            generate_pages_recursively(source_path,template,sub_destination_directory)
+            generate_pages_recursively(source_path,template,sub_destination_directory,basepath)
 
 def main():
      #If an argument is not given, default to / - For local testing
