@@ -75,9 +75,8 @@ def generate_pages_recursively(source_directory:str,template:str,destination_dir
                 full_template = text_template.replace("{{ Title }}", page_title)
                 full_template = full_template.replace("{{ Content }}", HTML_source)
                 #Update root-relative links to respect basepath
-                normalized_basepath = basepath.rstrip("/")
-                full_template = full_template.replace('href="/', f'href="{normalized_basepath}')
-                full_template = full_template.replace('src="/', f'src="{normalized_basepath}') 
+                full_template = full_template.replace('href="/', f'href="{basepath}')
+                full_template = full_template.replace('src="/', f'src="{basepath}') 
                 #Extract target directory path
                 dest_dir = os.path.dirname(destination_path) 
                 #Creates a directory tree if it doesn't exists
