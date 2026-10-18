@@ -1,0 +1,81 @@
+import os
+from pathlib import Path
+import shutil
+from split_nodes_delimiter import markdown_to_html_node,extract_title
+from htmlnode import HTMLnode
+
+def copy_files(source:str,destination:str) -> None:
+    #Ensure target destination directory exists
+    if not os.path.exists(destination):
+        os.mkdir(destination)
+
+    #Iterate through all times in the current source foulder
+    for item in os.listdir(source):
+        source_path = os.path.join(source,item)
+        destination_path = os.path.join(destination,item)
+
+        print(f"Copying: {source_path} to {destination_path}") #Logging
+
+        if os.path.isfile(source_path):
+            shutil.copy(source_path,destination_path)
+        else:
+            copy_files(source_path,destination_path)
+
+def generate_pages_recursively(source_directory:str,template:str,destination_directory:str) -> None:
+    for item in os.listdir(source_directory):
+        source_path = os.path.join(source_directory,item)
+        if os.path.isfile(source_path):
+            #Swap .md extension to .html
+            if item.endswith(".md"):
+                html_file = item[:-3] + ".html"
+                destination_path = os.path.join(destination_directory,html_file)
+                #Logging
+                print(f"Generating page from {source_path} to {destination_path} using {template}")
+                #Open and read the markdown file at source
+                with open(source_path,"r",encoding="utf-8") as f:
+                    text_source = f.read()
+                page_title = extract_title(text_source) #Extract the title
+                HTML_source = markdown_to_html_node(text_source).to_html() #Generate the Body
+                #Open and read the mardown file at template 
+                with open(template,"r",encoding="utf-8") as f:
+                    text_template = f.read()
+                full_template = text_template.replace("{{ Title }}", page_title)
+                full_template = full_template.replace("{{ Content }}", HTML_source) 
+                #Extract target directory path
+                dest_dir = os.path.dirname(destination_path) 
+                #Creates a directory tree if it doesn't exists
+                if dest_dir != "": 
+                    os.makedirs(dest_dir,exist_ok=True)
+                #Open and write the destination file
+                with open(destination_path,"w",encoding="utf-8") as f:
+                    f.write(full_template)
+        else:
+            sub_destination_directory = os.path.join(destination_directory,item)
+            generate_pages_recursively(source_path,template,sub_destination_directory)
+
+def main():
+    souce = STATIC_DIR
+    destination = PUBLIC_DIR
+
+    #Clear the destination directory first
+    if os.path.exists(destination):
+        shutil.rmtree(destination,ignore_errors=True) #Remove/delete all the contents of the destination directory
+
+    #Re-create empty destination directory
+    os.mkdir(destination)
+
+    #Run recursive copy
+    copy_files(souce,destination)
+
+    generate_pages_recursively(CONTENT_DIR,TEMPLATE_PATH,PUBLIC_DIR)
+
+SRC_DIR = os.path.dirname(os.path.abspath(__file__)) #Path to src
+PROJECT_ROOT = os.path.dirname(SRC_DIR) #Path to the root
+#Dynamic absolute paths
+STATIC_DIR = os.path.join(PROJECT_ROOT,"static")
+PUBLIC_DIR = os.path.join(PROJECT_ROOT,"public")
+CONTENT_DIR = os.path.join(PROJECT_ROOT,"content")
+TEMPLATE_PATH = os.path.join(PROJECT_ROOT, "template.html")
+
+if __name__ == "__main__":
+    main()
