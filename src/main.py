@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 import shutil
+import sys
 from split_nodes_delimiter import markdown_to_html_node,extract_title
 from htmlnode import HTMLnode
 
@@ -21,7 +21,40 @@ def copy_files(source:str,destination:str) -> None:
         else:
             copy_files(source_path,destination_path)
 
-def generate_pages_recursively(source_directory:str,template:str,destination_directory:str) -> None:
+def generate_page(from_path: str, template_path: str, dest_path: str, basepath: str="/") -> None:
+    #Print generating message
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+
+    #Read markdown file
+    with open(from_path, "r", encoding="utf-8") as f:
+        text_source = f.read()
+
+    #Read template file
+    with open(template_path, "r", encoding="utf-8") as f:
+        text_template = f.read()
+
+    #Convert markdown to HTML string
+    html_source = markdown_to_html_node(text_source).to_html()
+
+    #Extract page title
+    page_title = extract_title(text_source)
+
+    #Replace template placeholders
+    full_template = text_template.replace("{{ Title }}", page_title)
+    full_template = full_template.replace("{{ Content }}", html_source)
+    #Update root-relative links to respect basepath
+    full_template = full_template.replace('href="/"', f'href="{basepath}"')
+    full_template = full_template.replace('src="/"', f'src="{basepath}"')
+
+    #Ensure target directory exists and write full HTML file
+    dest_dir = os.path.dirname(dest_path)
+    if dest_dir != "":
+        os.makedirs(dest_dir, exist_ok=True)
+
+    with open(dest_path, "w", encoding="utf-8") as f:
+        f.write(full_template)
+
+def generate_pages_recursively(source_directory:str,template:str,destination_directory:str,basepath:str="/") -> None:
     for item in os.listdir(source_directory):
         source_path = os.path.join(source_directory,item)
         if os.path.isfile(source_path):
@@ -40,7 +73,10 @@ def generate_pages_recursively(source_directory:str,template:str,destination_dir
                 with open(template,"r",encoding="utf-8") as f:
                     text_template = f.read()
                 full_template = text_template.replace("{{ Title }}", page_title)
-                full_template = full_template.replace("{{ Content }}", HTML_source) 
+                full_template = full_template.replace("{{ Content }}", HTML_source)
+                #Update root-relative links to respect basepath
+                full_template = full_template.replace('href="/"', f'href="{basepath}"')
+                full_template = full_template.replace('src="/"', f'src="{basepath}"') 
                 #Extract target directory path
                 dest_dir = os.path.dirname(destination_path) 
                 #Creates a directory tree if it doesn't exists
@@ -54,6 +90,13 @@ def generate_pages_recursively(source_directory:str,template:str,destination_dir
             generate_pages_recursively(source_path,template,sub_destination_directory)
 
 def main():
+     #If an argument is not given, default to / 
+    basepath = "/"
+    #Grab the first CLI argument to the program
+    if len(sys.argv) > 1:
+        basepath = sys.argv[1]
+   
+
     souce = STATIC_DIR
     destination = PUBLIC_DIR
 
@@ -67,7 +110,7 @@ def main():
     #Run recursive copy
     copy_files(souce,destination)
 
-    generate_pages_recursively(CONTENT_DIR,TEMPLATE_PATH,PUBLIC_DIR)
+    generate_pages_recursively(CONTENT_DIR,TEMPLATE_PATH,PUBLIC_DIR,basepath)
 
 SRC_DIR = os.path.dirname(os.path.abspath(__file__)) #Path to src
 PROJECT_ROOT = os.path.dirname(SRC_DIR) #Path to the root
